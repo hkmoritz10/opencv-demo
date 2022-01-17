@@ -22,7 +22,7 @@ export default function Page() {
     // Load the model
     await cv.load()
     // Processing image
-    const processedImage = await cv.imageProcessing(image)
+    const processedImage = await cv.grayScale(image)
     // Render the processed image to the canvas
     ctx.putImageData(processedImage.data.payload, 0, 0)
     setProcessing(false)

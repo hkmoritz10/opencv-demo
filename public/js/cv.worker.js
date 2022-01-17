@@ -3,13 +3,21 @@
  * so the first thing we have to do is to transform the
  * ImageData to a type that openCV can recognize.
  */
-function imageProcessing({ msg, payload }) {
-  const img = cv.matFromImageData(payload.image)
-  let result = new cv.Mat()
-
-  // What this does is convert the image to a grey scale.
-  cv.cvtColor(img, result, cv.COLOR_BGR2GRAY)
-  postMessage({ msg, payload: imageDataFromMat(result) })
+function grayScale({ msg, payload }) {
+  console.log(`cv.worker.js grayScale called ${msg} ${payload}`);
+  let result= null;
+  if ( payload !== null ) {
+    const img = cv.matFromImageData( payload )
+    let mat = new cv.Mat()
+    console.log(`cv.worker.js grayScale payload !== null ${img} ${mat}`);
+    
+    // What this does is convert the image to a grey scale.
+    cv.cvtColor(img, mat, cv.COLOR_BGR2GRAY);
+    console.log(`cv.worker.js grayScale after cvtColor`);
+    result = imageDataFromMat(mat);
+  }
+  console.log(`cv.worker.js: grayScale processing finished ${result}`);
+  postMessage({ msg, payload: result });
 }
 
 /**
@@ -74,6 +82,7 @@ function waitForOpencv(callbackFn, waitTimeMs = 30000, stepTimeMs = 100) {
  * with our project.
  */
 onmessage = function ( e ) {
+  console.log(`worker: received message ${e} ${e.data.msg} ${e.data.payload}`);
   switch (e.data.msg) {
     case 'load': {
       // Import Webassembly script
@@ -84,8 +93,8 @@ onmessage = function ( e ) {
       })
       break
     }
-    case 'imageProcessing':
-      return imageProcessing(e.data)
+    case 'grayScale':
+      return grayScale(e.data)
     default:
       break
   }

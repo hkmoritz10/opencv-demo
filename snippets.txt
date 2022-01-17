@@ -1,0 +1,9 @@
+    // bitmapToImage( bitmap : ImageBitmap ) : ImageData | null {
+    //   let image : ImageData;
+
+    //   if ( this.offContext !== null ) {
+    //     this.offContext.drawImage(bitmap, 0, 0);
+    //     image = this.offContext?.getImageData(0, 0, bitmap.width, bitmap.height);
+    //   }
+    //   return image!;
+    // }

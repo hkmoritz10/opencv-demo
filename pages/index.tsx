@@ -94,13 +94,15 @@ const Home: NextPage = () => {
 
     async function drawingLoop(now: number, frame: VideoFrameMetadata) : void {
       const bitmap = await createImageBitmap(videoElement.current!);
-      const processedImage: MessageEvent = await cv.imageProcessing( { msg: "imageprocessing", payload: bitmap })
-      console.log("processed image rex");
+      console.log(`drawingLoop: grayScale bitmap ${bitmap} ${bitmap.width}x${bitmap.height}`);
+      const processedImage: MessageEvent = await cv.grayScale( bitmap );
+      console.log("processed image received");
       if (canvasEl.current !== null) {
         const ctx = canvasEl.current.getContext('2d');
         // Render the processed image to the canvas
-        ctx!.putImageData(processedImage.data.payload, 0, 0)
-
+        if ( processedImage.data.payload !== null ) {
+          ctx!.putImageData(processedImage.data.payload, 0, 0)
+        }
         if (videoElement.current !== null) {
           if (! videoElement.current.ended ) {
             videoElement.current.requestVideoFrameCallback(drawingLoop);
@@ -115,7 +117,9 @@ const Home: NextPage = () => {
       await cv.load();
 
       const videoLoaded = await setupFrameCapture();
+
       videoLoaded.play();
+      console.log("Start drawing loop");
       videoLoaded.requestVideoFrameCallback(drawingLoop);
       
       return videoLoaded;
@@ -136,6 +140,10 @@ const Home: NextPage = () => {
       <video style={{ width: 320 + "px" }} className="video" playsInline ref={videoElement} />
       <canvas
         ref={canvasEl}
+        width={maxVideoSize}
+        height={maxVideoSize}
+      ></canvas>
+      <canvas id="offScreenCanvas"
         width={maxVideoSize}
         height={maxVideoSize}
       ></canvas>
