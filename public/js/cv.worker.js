@@ -4,7 +4,7 @@
  * ImageData to a type that openCV can recognize.
  */
 function imageProcessing({ msg, payload }) {
-  const img = cv.matFromImageData(payload)
+  const img = cv.matFromImageData(payload.image)
   let result = new cv.Mat()
 
   // What this does is convert the image to a grey scale.
