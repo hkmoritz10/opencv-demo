@@ -40,12 +40,13 @@ class CV {
      */
     load() {
       this._status = { };
-      this.worker = new Worker('/js/cv.worker.js'); // load worker
+      this.worker = new Worker('/js/opencv_js.worker.js'); // load worker
   
       // Capture events and save [status, event] inside the _status object
       this.worker.onmessage = (e) => (this._status[e.data.msg] = ['done', e]);
       this.worker.onerror = (e) => (this._status[e.message] = ['error', e]);
 
+      
       //if(!ctx) fallbackToWebGL(bitmap);
 
       return this._dispatch({ msg: 'load', payload: null });

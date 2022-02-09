@@ -5,16 +5,22 @@
  */
 function grayScale({ msg, payload }) {
   console.log(`cv.worker.js grayScale called ${msg} ${payload}`);
-  let result= null;
-  if ( payload !== null ) {
-    const img = cv.matFromImageData( payload )
-    let mat = new cv.Mat()
-    console.log(`cv.worker.js grayScale payload !== null ${img} ${mat}`);
-    
-    // What this does is convert the image to a grey scale.
-    cv.cvtColor(img, mat, cv.COLOR_BGR2GRAY);
-    console.log(`cv.worker.js grayScale after cvtColor`);
-    result = imageDataFromMat(mat);
+  let result = null;
+  try {
+    if (payload !== null) {
+      const img = cv.matFromImageData(payload)
+      const mat = new cv.Mat()
+      console.log(`cv.worker.js grayScale payload !== null ${img} ${mat}`);
+
+      // What this does is convert the image to a grey scale.
+      cv.cvtColor(img, mat, cv.COLOR_BGR2GRAY);
+      console.log(`cv.worker.js grayScale after cvtColor`);
+      result = imageDataFromMat(mat);
+      mat.delete();
+      img.delete();
+    }
+  } catch ( error ){
+    console.log(`Warning exception ${error}`);
   }
   console.log(`cv.worker.js: grayScale processing finished ${result}`);
   postMessage({ msg, payload: result });
@@ -81,12 +87,12 @@ function waitForOpencv(callbackFn, waitTimeMs = 30000, stepTimeMs = 100) {
  * into the worker. Without this, there would be no communication possible
  * with our project.
  */
-onmessage = function ( e ) {
+onmessage = function (e) {
   console.log(`worker: received message ${e} ${e.data.msg} ${e.data.payload}`);
   switch (e.data.msg) {
     case 'load': {
       // Import Webassembly script
-      self.importScripts('./opencv_4_5_5.js')
+      self.importScripts('./opencv_wasm_threads.js')
       waitForOpencv(function (success) {
         if (success) postMessage({ msg: e.data.msg })
         else throw new Error('Error on loading OpenCV')

@@ -3,7 +3,8 @@ import Head from 'next/head'
 import Image from 'next/image'
 import styles from '../styles/Home.module.css'
 import { MutableRefObject, useEffect, useRef, useState } from 'react'
-import cv from '../services/cv'
+import { cv } from '../services/cv'
+import { loadOpenCV } from '../public/ts/loader'
 
 // requestVideoFrameCallback fill
 interface VideoFrameMetadata {
@@ -63,8 +64,6 @@ const Home: NextPage = () => {
           audio: false,
           video: {
             facingMode: 'user',
-            width: 320,
-            height: 320,
           },
         })
 
@@ -92,19 +91,19 @@ const Home: NextPage = () => {
       return video;
     }
 
-    async function drawingLoop(now: number, frame: VideoFrameMetadata) : void {
+    async function drawingLoop(now: number, frame: VideoFrameMetadata): Promise<void> {
       const bitmap = await createImageBitmap(videoElement.current!);
       console.log(`drawingLoop: grayScale bitmap ${bitmap} ${bitmap.width}x${bitmap.height}`);
-      const processedImage: MessageEvent = await cv.grayScale( bitmap );
+      const processedImage: MessageEvent = await cv.grayScale(bitmap);
       console.log("processed image received");
       if (canvasEl.current !== null) {
         const ctx = canvasEl.current.getContext('2d');
         // Render the processed image to the canvas
-        if ( processedImage.data.payload !== null ) {
+        if (processedImage.data.payload !== null) {
           ctx!.putImageData(processedImage.data.payload, 0, 0)
         }
         if (videoElement.current !== null) {
-          if (! videoElement.current.ended ) {
+          if (!videoElement.current.ended) {
             videoElement.current.requestVideoFrameCallback(drawingLoop);
           } else {
           }
@@ -112,16 +111,27 @@ const Home: NextPage = () => {
       }
     }
 
+    async function loaded_cb() {
+      console.log( `opencv loaded callback called` );
+    }
+
     async function load() {
       // Load the model
-      await cv.load();
+      loadOpenCV({
+        'wasm': '/js/opencv_wasm.js',
+        'threads': '/js/opencv_wasm_threads.js',
+//        'simd': '/js/opencv_wasm_simd.js',
+//        'threadsSimd': '/js/opencv_wasm_simd_threads.js'
+      }, loaded_cb );
+
+      await loaded_cb();
 
       const videoLoaded = await setupFrameCapture();
 
       videoLoaded.play();
       console.log("Start drawing loop");
       videoLoaded.requestVideoFrameCallback(drawingLoop);
-      
+
       return videoLoaded;
     }
 
@@ -146,6 +156,7 @@ const Home: NextPage = () => {
       <canvas id="offScreenCanvas"
         width={maxVideoSize}
         height={maxVideoSize}
+        style={{ visibility: 'hidden' }}
       ></canvas>
     </div>
   )
