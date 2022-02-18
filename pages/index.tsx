@@ -1,10 +1,15 @@
-import type { NextPage } from 'next'
-import Head from 'next/head'
-import Image from 'next/image'
-import styles from '../styles/Home.module.css'
-import { MutableRefObject, useEffect, useRef, useState } from 'react'
-import { cv } from '../services/cv'
-import { loadOpenCV } from '../public/ts/loader'
+import type { NextPage } from 'next';
+import Head from 'next/head';
+import Image from 'next/image';
+import styles from '../styles/Home.module.css';
+import { MutableRefObject, useEffect, useRef, useState } from 'react';
+import cv from '../services/cv';
+import { loadOpenCV } from '../public/ts/loader';
+import CameraCalibration from './cameracalibration';
+import SettingsScreen from './settingsscreen';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { NavigationContainer } from '@react-navigation/native';
+
 
 // requestVideoFrameCallback fill
 interface VideoFrameMetadata {
@@ -40,7 +45,7 @@ interface HTMLVideoElement extends HTMLMediaElement {
 // We'll limit the processing size to 1080
 const maxVideoSize = 1080
 
-const Home: NextPage = () => {
+const HomeScreen: NextPage = () => {
   //const [processing, setProcessing] = useState(false);
   const videoElement: MutableRefObject<HTMLVideoElement | null> = useRef(null);
   const canvasEl: MutableRefObject<HTMLCanvasElement | null> = useRef(null);
@@ -138,15 +143,18 @@ const Home: NextPage = () => {
     load();
   }, [])
 
+  const Tab = createBottomTabNavigator();
+
   return (
     <div
-      style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        flexDirection: 'column',
-      }}
-    >
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          flexDirection: 'column',
+        }}
+      >
+
       <video style={{ width: 320 + "px" }} className="video" playsInline ref={videoElement} />
       <canvas
         ref={canvasEl}
@@ -158,10 +166,14 @@ const Home: NextPage = () => {
         height={maxVideoSize}
         style={{ visibility: 'hidden' }}
       ></canvas>
-    </div>
+      <NavigationContainer>
+        <Tab.Navigator>
+          <Tab.Screen name="CameraCalibration" component={CameraCalibration} />
+          <Tab.Screen name="Settings" component={SettingsScreen} />
+        </Tab.Navigator>
+      </NavigationContainer>
+      </div>
   )
 }
 
-export default Home;
-
-
+export default HomeScreen;
