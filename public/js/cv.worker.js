@@ -1,3 +1,5 @@
+//import { loadOpenCV } from "../ts/loader";
+
 /**
  * With OpenCV we have to work the images as cv.Mat (matrices),
  * so the first thing we have to do is to transform the
@@ -15,6 +17,8 @@ function grayScale({ msg, payload }) {
     cv.cvtColor(img, mat, cv.COLOR_BGR2GRAY);
     console.log(`cv.worker.js grayScale after cvtColor`);
     result = imageDataFromMat(mat);
+    mat.delete();
+    img.delete();
   }
   console.log(`cv.worker.js: grayScale processing finished ${result}`);
   postMessage({ msg, payload: result });
@@ -86,7 +90,8 @@ onmessage = function ( e ) {
   switch (e.data.msg) {
     case 'load': {
       // Import Webassembly script
-      self.importScripts('./opencv_4_5_5.js')
+      self.importScripts('./opencv_4_5_5.js');
+
       waitForOpencv(function (success) {
         if (success) postMessage({ msg: e.data.msg })
         else throw new Error('Error on loading OpenCV')
@@ -99,3 +104,4 @@ onmessage = function ( e ) {
       break
   }
 }
+
