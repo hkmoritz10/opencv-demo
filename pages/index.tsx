@@ -1,15 +1,12 @@
-import type { NextPage } from 'next';
-import Head from 'next/head';
-import Image from 'next/image';
-import styles from '../styles/Home.module.css';
-import { MutableRefObject, useEffect, useRef, useState } from 'react';
-import cv from '../services/cv';
-import { loadOpenCV } from '../public/ts/loader';
-import CameraCalibration from './cameracalibration';
-import SettingsScreen from './settingsscreen';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { NavigationContainer } from '@react-navigation/native';
-
+import type { NextPage } from "next";
+import Head from "next/head";
+import Image from "next/image";
+import styles from "../styles/Home.module.css";
+import { MutableRefObject, useEffect, useRef, useState } from "react";
+import cvproc from "../services/cvproc";
+import { loadOpenCV } from "../public/ts/loader";
+import CameraCalibration from "../components/cameracalibration";
+import SettingsScreen from "../components/settingsscreen";
 
 // requestVideoFrameCallback fill
 interface VideoFrameMetadata {
@@ -23,11 +20,13 @@ interface VideoFrameMetadata {
   captureTime?: DOMHighResTimeStamp;
   receiveTime?: DOMHighResTimeStamp;
   rtpTimestamp?: number;
-};
+}
 type VideoFrameRequestCallbackId = number;
 
 interface HTMLVideoElement extends HTMLMediaElement {
-  requestVideoFrameCallback(callback: (now: DOMHighResTimeStamp, metadata: VideoFrameMetadata) => any): VideoFrameRequestCallbackId;
+  requestVideoFrameCallback(
+    callback: (now: DOMHighResTimeStamp, metadata: VideoFrameMetadata) => any
+  ): VideoFrameRequestCallbackId;
   cancelVideoFrameCallback(handle: VideoFrameRequestCallbackId): void;
   disablePictureInPicture: boolean;
   height: number;
@@ -43,7 +42,7 @@ interface HTMLVideoElement extends HTMLMediaElement {
 }
 
 // We'll limit the processing size to 1080
-const maxVideoSize = 1080
+const maxVideoSize = 1080;
 
 const HomeScreen: NextPage = () => {
   //const [processing, setProcessing] = useState(false);
@@ -58,7 +57,6 @@ const HomeScreen: NextPage = () => {
    * to OpenCV.
    */
   useEffect(() => {
-
     async function setupCamera(): Promise<HTMLVideoElement> {
       if (videoElement.current !== null) {
         videoElement.current.width = 320;
@@ -68,44 +66,50 @@ const HomeScreen: NextPage = () => {
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: false,
           video: {
-            facingMode: 'user',
+            facingMode: "user",
           },
-        })
+        });
 
         if (videoElement.current !== null) {
-          videoElement.current!.srcObject = stream
+          videoElement.current!.srcObject = stream;
         }
 
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
           if (videoElement.current !== null) {
             videoElement.current!.onloadedmetadata = () => {
               resolve(videoElement.current!);
-            }
+            };
           }
-        })
+        });
       }
       const errorMessage =
-        'This browser does not support video capture, or this device does not have a camera'
-      alert(errorMessage)
-      return Promise.reject(errorMessage)
+        "This browser does not support video capture, or this device does not have a camera";
+      alert(errorMessage);
+      return Promise.reject(errorMessage);
     }
 
     async function setupFrameCapture(): Promise<HTMLVideoElement> {
       const video = await setupCamera();
-
+      cvproc.load();
       return video;
     }
 
-    async function drawingLoop(now: number, frame: VideoFrameMetadata): Promise<void> {
+    async function drawingLoop(
+      now: number,
+      frame: VideoFrameMetadata
+    ): Promise<void> {
       const bitmap = await createImageBitmap(videoElement.current!);
-      console.log(`drawingLoop: grayScale bitmap ${bitmap} ${bitmap.width}x${bitmap.height}`);
-      const processedImage: MessageEvent = await cv.grayScale(bitmap);
+      console.log(
+        `drawingLoop: grayScale bitmap ${bitmap} ${bitmap.width}x${bitmap.height}`
+      );
+      const processedImage: MessageEvent = await cvproc.grayScale(bitmap);
+
       console.log("processed image received");
       if (canvasEl.current !== null) {
-        const ctx = canvasEl.current.getContext('2d');
+        const ctx = canvasEl.current.getContext("2d");
         // Render the processed image to the canvas
         if (processedImage.data.payload !== null) {
-          ctx!.putImageData(processedImage.data.payload, 0, 0)
+          ctx!.putImageData(processedImage.data.payload, 0, 0);
         }
         if (videoElement.current !== null) {
           if (!videoElement.current.ended) {
@@ -117,19 +121,19 @@ const HomeScreen: NextPage = () => {
     }
 
     async function loaded_cb() {
-      console.log( `opencv loaded callback called` );
+      console.log(`opencv loaded callback called`);
     }
 
     async function load() {
       // Load the model
-      loadOpenCV({
-        'wasm': '/js/opencv_wasm.js',
-        'threads': '/js/opencv_wasm_threads.js',
-//        'simd': '/js/opencv_wasm_simd.js',
-//        'threadsSimd': '/js/opencv_wasm_simd_threads.js'
-      }, loaded_cb );
+      //       loadOpenCV({
+      //         'wasm': '/js/opencv_wasm.js',
+      //         'threads': '/js/opencv_wasm_threads.js',
+      // //        'simd': '/js/opencv_wasm_simd.js',
+      // //        'threadsSimd': '/js/opencv_wasm_simd_threads.js'
+      //       }, loaded_cb );
 
-      await loaded_cb();
+      //       await loaded_cb();
 
       const videoLoaded = await setupFrameCapture();
 
@@ -141,39 +145,36 @@ const HomeScreen: NextPage = () => {
     }
 
     load();
-  }, [])
-
-  const Tab = createBottomTabNavigator();
+  }, []);
 
   return (
     <div
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          flexDirection: 'column',
-        }}
-      >
-
-      <video style={{ width: 320 + "px" }} className="video" playsInline ref={videoElement} />
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        flexDirection: "column",
+      }}
+    >
+      <video
+        style={{ width: 320 + "px" }}
+        className="video"
+        playsInline
+        ref={videoElement}
+      />
       <canvas
         ref={canvasEl}
         width={maxVideoSize}
         height={maxVideoSize}
       ></canvas>
-      <canvas id="offScreenCanvas"
+      <canvas
+        id="offScreenCanvas"
         width={maxVideoSize}
         height={maxVideoSize}
-        style={{ visibility: 'hidden' }}
+        style={{ visibility: "hidden" }}
       ></canvas>
-      <NavigationContainer>
-        <Tab.Navigator>
-          <Tab.Screen name="CameraCalibration" component={CameraCalibration} />
-          <Tab.Screen name="Settings" component={SettingsScreen} />
-        </Tab.Navigator>
-      </NavigationContainer>
-      </div>
-  )
-}
+    </div>
+  );
+};
 
 export default HomeScreen;

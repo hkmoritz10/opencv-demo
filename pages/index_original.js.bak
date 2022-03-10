@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import cv from '../services/cv'
+import cvproc from '../services/cvproc'
 
 // We'll limit the processing size to 200px.
 const maxVideoSize = 200

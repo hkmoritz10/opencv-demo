@@ -94,12 +94,8 @@ onmessage = function (e) {
   switch (e.data.msg) {
     case 'load': {
       // Import Webassembly script
-<<<<<<< HEAD
-      self.importScripts('./opencv_wasm_threads.js')
-=======
-      self.importScripts('./opencv_4_5_5.js');
-
->>>>>>> local
+      //self.importScripts('./opencv_wasm_threads.js');
+      self.importScripts('./opencv_4_5_5.js')
       waitForOpencv(function (success) {
         if (success) postMessage({ msg: e.data.msg })
         else throw new Error('Error on loading OpenCV')
